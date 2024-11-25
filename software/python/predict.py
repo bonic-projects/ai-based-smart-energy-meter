@@ -77,7 +77,7 @@ def on_data_change(event):
                     })
                     print(f"Bonic cloud updated with predicted kWh: {predicted_kwh}")
                 else:
-                    print("Prediction failed")
+                    print("Prediction failed")  #failed
             except Exception as e:
                 print(f"Error processing data: {e}")
         else:
