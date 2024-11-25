@@ -18,10 +18,13 @@ def get_ref():
 
 
 def get_data_ref():
-    return db.reference("/devices/i6v29xWLkNNXWfGjta1jh3z336j2/predictions")
+    return db.reference("/devices/i6v29xWLkNNXWfGjta1jh3z336j2/predictions_result")
 
 def reset():
     return db.reference("/devices/i6v29xWLkNNXWfGjta1jh3z336j2/data")
+
+def reading():
+    return db.reference("/devices/i6v29xWLkNNXWfGjta1jh3z336j2/reading")
 # def get_data_ref():
 #     return db.reference("/predictions/")
 # def get_ref():
