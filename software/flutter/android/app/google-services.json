@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "599651659729",
+    "project_id": "ai-based-smart-energy-meter",
+    "storage_bucket": "ai-based-smart-energy-meter.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:599651659729:android:820f35965832690297baf0",
+        "android_client_info": {
+          "package_name": "com.example.ai_based_smart_energy_meter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMe4q-SD-8oP1DPBiSF7NxVaBytNhaIJM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
