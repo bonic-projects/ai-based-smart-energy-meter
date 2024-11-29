@@ -1,3 +1,4 @@
+import 'package:ai_based_smart_energy_meter/app/app.logger.dart';
 import 'package:ai_based_smart_energy_meter/models/device_data.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,6 +9,7 @@ class DatabaseService {
   final _dbRef = FirebaseDatabase.instance.ref('/devices/$dbCode/reading');
   final _resetRef=FirebaseDatabase.instance.ref('/devices/$dbCode/data/reset');
   final _databaseRef=FirebaseDatabase.instance;
+  final log=getLogger('DatabaseService');
 
   Future<DeviceReading?> fetchDeviceData() async {
     final snapshot = await _dbRef.get();
@@ -37,7 +39,8 @@ class DatabaseService {
 
       await _resetRef.set(false);
     } catch (e) {
-      print("Error in resetting flag: $e");
+      log.e("Error in resetting flag: $e");
+      // print("Error in resetting flag: $e");
       rethrow;
     }
   }

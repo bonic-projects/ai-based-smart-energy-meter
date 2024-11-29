@@ -22,7 +22,7 @@ class HomeView extends StatelessWidget {
                 Text(
                   'AI Based Smart Energy Meter',
                   style: TextStyle(color: Colors.black),
-                ),SizedBox(width: 50,),
+                ),SizedBox(width: 10,),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -97,7 +97,7 @@ class HomeView extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(
-                          height: 50,
+                          height: 10,
                         ),
                         Container(
                           height: 45,
@@ -120,7 +120,7 @@ class HomeView extends StatelessWidget {
                             child: Center(child: Text("Device Monitoring",style: TextStyle(fontSize: 20,color: Colors.teal),)),
                           ),
                         ),
-                        const SizedBox(height: 50),
+                        const SizedBox(height: 20),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [

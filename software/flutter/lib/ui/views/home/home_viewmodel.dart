@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:ai_based_smart_energy_meter/app/app.locator.dart';
+import 'package:ai_based_smart_energy_meter/app/app.logger.dart';
 import 'package:ai_based_smart_energy_meter/services/database_service.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,6 +14,7 @@ class HomeViewModel extends ReactiveViewModel {
   final _databaseService = locator<DatabaseService>();
   // final FirebaseService _firebaseService = FirebaseService();
   final _snackbarService = SnackbarService();
+final log= getLogger('HomeViewModel');
 
   DeviceReading? _deviceReading;
   double _energyLimit = 0.0;
@@ -61,10 +63,11 @@ class HomeViewModel extends ReactiveViewModel {
         _deviceReading = data;
         notifyListeners();
       } else {
-        print('No data returned from Firebase');
+        log.i('No data returned from Firebase');
       }
     } catch (e) {
-      print('Error fetching device data: $e');
+      log.e('Error fetching device data: $e');
+      // print('Error fetching device data: $e');
     }
   }
 
@@ -84,15 +87,17 @@ class HomeViewModel extends ReactiveViewModel {
       await prefs.setInt('last_reset_timestamp', now.millisecondsSinceEpoch);
       final currentEnergy = _deviceReading?.energy ?? 0.0;
       await prefs.setDouble('previous_energy', currentEnergy);
-      print("New day reset. Current energy stored as previous: $currentEnergy");
+      log.i("New day reset. Current energy stored as previous: $currentEnergy");
+      // print("New day reset. Current energy stored as previous: $currentEnergy");
       _dailyConsumption = 0.0; // Reset daily consumption
     } else {
       // Calculate consumption
       final previousEnergy = prefs.getDouble('previous_energy') ?? 0.0;
       final currentEnergy = _deviceReading?.energy ?? 0.0;
       _dailyConsumption = currentEnergy - previousEnergy;
-      print(
-          "Continuing day. Current energy: $currentEnergy, Previous energy: $previousEnergy, Daily consumption: $_dailyConsumption");
+      log.i("Continuing day. Current energy: $currentEnergy, Previous energy: $previousEnergy, Daily consumption: $_dailyConsumption");
+      // print(
+      //     "Continuing day. Current energy: $currentEnergy, Previous energy: $previousEnergy, Daily consumption: $_dailyConsumption");
     }
 
     notifyListeners();
@@ -155,7 +160,8 @@ class HomeViewModel extends ReactiveViewModel {
       setBusy(true); // Indicate that the ViewModel is busy
       await _databaseService.resetFlag();
     } catch (e) {
-      print("Error resetting value in ViewModel: $e");
+      log.e("Error resetting value in ViewModel: $e");
+      // print("Error resetting value in ViewModel: $e");
     } finally {
       setBusy(false); // Reset the busy state
     }
