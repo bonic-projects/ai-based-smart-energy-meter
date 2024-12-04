@@ -5,16 +5,16 @@ import 'package:firebase_database/firebase_database.dart';
 
 class FirebaseService {
   final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
-  final log=getLogger('FirebaseService');
+  // final log=getLogger('FirebaseService');
 
   // Save prediction without user ID
   Future<void> savePredictionWithoutUid(Map<String, dynamic> data) async {
     try {
       await _dbRef.child('devices').child('i6v29xWLkNNXWfGjta1jh3z336j2').child('predictions').set(data);
-      log.i("Prediction saved successfully.");
+      // log.i("Prediction saved successfully.");
       //("Prediction saved successfully.");
     } catch (e) {
-      log.e("Error saving prediction: $e");
+      // log.e("Error saving prediction: $e");
       // print("Error saving prediction: $e");
     }
   }
@@ -40,19 +40,19 @@ class FirebaseService {
           } else if (result is String) {
             return double.tryParse(result); // Attempt parsing if a string
           } else {
-            log.i("Unexpected type for result in predictions_result: $result (${result.runtimeType})");
+            // log.i("Unexpected type for result in predictions_result: $result (${result.runtimeType})");
             // print("Unexpected type for result in predictions_result: $result (${result.runtimeType})");
           }
         } else {
-          log.i("Unexpected type for predictions_result: $value (${value.runtimeType})");
+          // log.i("Unexpected type for predictions_result: $value (${value.runtimeType})");
           // print("Unexpected type for predictions_result: $value (${value.runtimeType})");
         }
       } else {
-        log.i("No predictions_result found at /devices/$dbCode.");
+        // log.i("No predictions_result found at /devices/$dbCode.");
         // print("No predictions_result found at /devices/$dbCode.");
       }
     } catch (e) {
-      log.e("Error fetching prediction from /devices/$dbCode/predictions_result: $e");
+      // log.e("Error fetching prediction from /devices/$dbCode/predictions_result: $e");
       // print("Error fetching prediction from /devices/$dbCode/predictions_result: $e");
     }
     return null; // Return null if no valid value is found

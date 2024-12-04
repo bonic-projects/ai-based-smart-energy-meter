@@ -9,7 +9,7 @@ class DatabaseService {
   final _dbRef = FirebaseDatabase.instance.ref('/devices/$dbCode/reading');
   final _resetRef=FirebaseDatabase.instance.ref('/devices/$dbCode/data/reset');
   final _databaseRef=FirebaseDatabase.instance;
-  final log=getLogger('DatabaseService');
+  // final log=getLogger('DatabaseService');
 
   Future<DeviceReading?> fetchDeviceData() async {
     final snapshot = await _dbRef.get();
@@ -39,7 +39,7 @@ class DatabaseService {
 
       await _resetRef.set(false);
     } catch (e) {
-      log.e("Error in resetting flag: $e");
+      // log.e("Error in resetting flag: $e");
       // print("Error in resetting flag: $e");
       rethrow;
     }

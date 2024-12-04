@@ -9,7 +9,7 @@ class PredictViewModel extends BaseViewModel {
   final TextEditingController yearController = TextEditingController();
   final TextEditingController kidsController = TextEditingController();
   final TextEditingController adultsController = TextEditingController();
- final log=getLogger('PredictViewModel');
+ // final log=getLogger('PredictViewModel');
   final FirebaseService _firebaseService = FirebaseService();
 
   bool _isLoading = false;
@@ -36,7 +36,7 @@ class PredictViewModel extends BaseViewModel {
         yearController.text.isEmpty ||
         kidsController.text.isEmpty ||
         adultsController.text.isEmpty) {
-      log.i("Validation failed. All fields are required.");
+      // log.i("Validation failed. All fields are required.");
       // print("Validation failed. All fields are required.");
       return;
     }
@@ -60,16 +60,16 @@ class PredictViewModel extends BaseViewModel {
       kidsController.clear();
       adultsController.clear();
 
-      log.i("Data saved successfully!");
+      // log.i("Data saved successfully!");
       // print("Data saved successfully!");
 
       // Fetch prediction after saving
       const dbCode = "i6v29xWLkNNXWfGjta1jh3z336j2";
       _prediction = await _firebaseService.fetchPrediction(dbCode);
-      log.i("Fetched prediction: $_prediction");
+      // log.i("Fetched prediction: $_prediction");
       // print("Fetched prediction: $_prediction");
     } catch (e) {
-      log.e("Error saving prediction: $e");
+      // log.e("Error saving prediction: $e");
       // print("Error saving prediction: $e");
     } finally {
       _isLoading = false;
