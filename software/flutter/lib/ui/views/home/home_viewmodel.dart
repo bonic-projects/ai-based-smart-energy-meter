@@ -4,6 +4,7 @@ import 'package:ai_based_smart_energy_meter/app/app.locator.dart';
 import 'package:ai_based_smart_energy_meter/app/app.logger.dart';
 import 'package:ai_based_smart_energy_meter/services/database_service.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
@@ -54,6 +55,7 @@ class HomeViewModel extends ReactiveViewModel {
     await prefs.setDouble('energy_limit', limit);
     _energyLimit = limit;
     notifyListeners();
+    checkLimitExceeded();
   }
 
   Future<void> fetchDeviceData() async {
@@ -104,12 +106,13 @@ class HomeViewModel extends ReactiveViewModel {
   }
 
 
-  // void calculateDailyConsumption() {
-  //   _dailyConsumption = (_deviceReading?.energy ?? 0.0) - _previousEnergy;
-  //   if (_dailyConsumption < 0)
-  //     _dailyConsumption = 0.0; // Prevent negative values
-  //   notifyListeners();
-  // }
+  void calculateDailyConsumption() {
+    _dailyConsumption = (_deviceReading?.energy ?? 0.0) - _previousEnergy;
+    if (_dailyConsumption < 0)
+      _dailyConsumption = 0.0; // Prevent negative values
+    notifyListeners();
+    checkLimitExceeded();
+  }
 
   // Future<double> _getPreviousEnergy() {
   //   final prefs = SharedPreferences.getInstance();
@@ -121,7 +124,7 @@ class HomeViewModel extends ReactiveViewModel {
       _snackbarService.showSnackbar(
         message: 'You have exceeded your set limit!',
         title: 'Limit Exceeded',
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 5),
       );
     }
   }

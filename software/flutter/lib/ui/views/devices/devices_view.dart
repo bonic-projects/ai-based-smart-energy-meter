@@ -31,21 +31,35 @@ class DevicesView extends StatelessWidget {
                   return Card(
                     color: Colors.black12,
                     child: ListTile(
-                      title: Text(device['name'],style: TextStyle(color: Colors.blueAccent),),
-                      subtitle: Text('Total Usage: ${device['totalUsage']} kWh',style: TextStyle(color: Colors.blueAccent),),
+                      title: Text(
+                        device['name'],
+                        style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(
+                        'Total Usage: ${device['totalUsage']} kWh',
+                        style: TextStyle(color: Colors.white70),
+                      ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           ElevatedButton(
-                            onPressed: () => _showMonitoringDialog(context, model, deviceId, device),
-                            child: Text('Start Monitoring'),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.black12,side: BorderSide(color: Colors.white38)),
+                            onPressed: device['isMonitoring']
+                                ? null
+                                : () => _showMonitoringDialog(context, model, deviceId, device),
+                            child: Text(device['isMonitoring'] ? 'Monitoring...' : 'Start Monitoring'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black12,
+                              side: BorderSide(color: Colors.white38),
+                            ),
                           ),
                           SizedBox(width: 10),
                           ElevatedButton(
                             onPressed: () => model.resetUsage(deviceId),
                             child: Text('Reset'),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.black12,side: BorderSide(color: Colors.white38)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black12,
+                              side: BorderSide(color: Colors.white38),
+                            ),
                           ),
                         ],
                       ),
@@ -66,12 +80,10 @@ class DevicesView extends StatelessWidget {
     );
   }
 
-  // Show dialog for monitoring a device
   void _showMonitoringDialog(BuildContext context, DeviceViewModel model, String deviceId, dynamic device) {
     final currentUsageController = ValueNotifier<double>(0.0);
 
-    // Listen to Realtime Database for current usage
-    final energyRef = FirebaseDatabase.instance.ref().child('devices/i6v29xWLkNNXWfGjta1jh3z336j2/reading/energy');
+    final energyRef = FirebaseDatabase.instance.ref().child('devices/$deviceId/reading/energy');
     energyRef.onValue.listen((event) {
       final currentValue = (event.snapshot.value as num?)?.toDouble() ?? 0.0;
       final beforeValue = (device['beforeValue'] as num?)?.toDouble() ?? 0.0;
@@ -85,12 +97,12 @@ class DevicesView extends StatelessWidget {
           valueListenable: currentUsageController,
           builder: (context, currentUsage, child) {
             return AlertDialog(
-              title: Text('${device['name']} is now monitoring'),
+              title: Text('${device['name']} Monitoring'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text('Before kWh Value: ${device['beforeValue']}'),
-                  Text('Current Usage: $currentUsage kWh'),
+                  Text('Current Usage: ${currentUsage.toStringAsFixed(2)} kWh'),
                 ],
               ),
               actions: [
@@ -113,7 +125,6 @@ class DevicesView extends StatelessWidget {
     );
   }
 
-  // Show dialog to add a device
   void _showAddDeviceDialog(BuildContext context, DeviceViewModel model) {
     final TextEditingController deviceNameController = TextEditingController();
     final TextEditingController deviceIdController = TextEditingController();

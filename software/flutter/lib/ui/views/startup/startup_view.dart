@@ -17,11 +17,11 @@ class StartupView extends StackedView<StartupViewModel> {
     return const Scaffold(
       body: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               'Smart Energy Meter',
-              style: TextStyle(fontSize: 40, fontWeight: FontWeight.w900),
+              style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900,color: Colors.green),
             ),
             Row(
               mainAxisSize: MainAxisSize.min,
