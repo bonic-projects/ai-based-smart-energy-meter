@@ -8,13 +8,14 @@ class DeviceReading {
   DateTime timestamp;
   double voltage;
 
-  DeviceReading(
-      {required this.cost,
-      required this.current,
-      required this.power,
-      required this.energy,
-      required this.timestamp,
-      required this.voltage});
+  DeviceReading({
+    required this.cost,
+    required this.current,
+    required this.power,
+    required this.energy,
+    required this.timestamp,
+    required this.voltage,
+  });
 
   factory DeviceReading.fromMap(Map data) {
     return DeviceReading(
@@ -29,5 +30,3 @@ class DeviceReading {
     );
   }
 }
-
-

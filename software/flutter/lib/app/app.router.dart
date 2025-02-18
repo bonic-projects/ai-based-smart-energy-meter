@@ -9,14 +9,21 @@ import 'package:ai_based_smart_energy_meter/ui/views/devices/devices_view.dart'
     as _i4;
 import 'package:ai_based_smart_energy_meter/ui/views/home/home_view.dart'
     as _i2;
+import 'package:ai_based_smart_energy_meter/ui/views/main/main_view.dart'
+    as _i6;
+import 'package:ai_based_smart_energy_meter/ui/views/notification/notification_view.dart'
+    as _i8;
+import 'package:ai_based_smart_energy_meter/ui/views/notification/notification_viewmodel.dart';
 import 'package:ai_based_smart_energy_meter/ui/views/predict/predict_view.dart'
     as _i5;
+import 'package:ai_based_smart_energy_meter/ui/views/profile/profile_view.dart'
+    as _i7;
 import 'package:ai_based_smart_energy_meter/ui/views/startup/startup_view.dart'
     as _i3;
-import 'package:flutter/material.dart' as _i6;
+import 'package:flutter/material.dart' as _i9;
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart' as _i1;
-import 'package:stacked_services/stacked_services.dart' as _i7;
+import 'package:stacked_services/stacked_services.dart' as _i10;
 
 class Routes {
   static const homeView = '/home-view';
@@ -27,11 +34,20 @@ class Routes {
 
   static const predictView = '/predict-view';
 
+  static const mainView = '/';
+
+  static const profileView = '/profile-view';
+
+  static const notificationView = '/notification-view';
+
   static const all = <String>{
     homeView,
     startupView,
     devicesView,
     predictView,
+    mainView,
+    profileView,
+    notificationView,
   };
 }
 
@@ -53,30 +69,60 @@ class StackedRouter extends _i1.RouterBase {
       Routes.predictView,
       page: _i5.PredictView,
     ),
+    _i1.RouteDef(
+      Routes.mainView,
+      page: _i6.MainView,
+    ),
+    _i1.RouteDef(
+      Routes.profileView,
+      page: _i7.ProfileView,
+    ),
+    _i1.RouteDef(
+      Routes.notificationView,
+      page: _i8.NotificationView,
+    ),
   ];
 
   final _pagesMap = <Type, _i1.StackedRouteFactory>{
     _i2.HomeView: (data) {
-      return _i6.MaterialPageRoute<dynamic>(
-        builder: (context) => _i2.HomeView(),
+      return _i9.MaterialPageRoute<dynamic>(
+        builder: (context) => const _i2.HomeView(),
         settings: data,
       );
     },
     _i3.StartupView: (data) {
-      return _i6.MaterialPageRoute<dynamic>(
+      return _i9.MaterialPageRoute<dynamic>(
         builder: (context) => const _i3.StartupView(),
         settings: data,
       );
     },
     _i4.DevicesView: (data) {
-      return _i6.MaterialPageRoute<dynamic>(
-        builder: (context) =>  _i4.DevicesView(),
+      return _i9.MaterialPageRoute<dynamic>(
+        builder: (context) => _i4.DevicesView(),
         settings: data,
       );
     },
     _i5.PredictView: (data) {
-      return _i6.MaterialPageRoute<dynamic>(
-        builder: (context) =>  _i5.PredictView(),
+      return _i9.MaterialPageRoute<dynamic>(
+        builder: (context) => const _i5.PredictView(),
+        settings: data,
+      );
+    },
+    _i6.MainView: (data) {
+      return _i9.MaterialPageRoute<dynamic>(
+        builder: (context) => const _i6.MainView(),
+        settings: data,
+      );
+    },
+    _i7.ProfileView: (data) {
+      return _i9.MaterialPageRoute<dynamic>(
+        builder: (context) => _i7.ProfileView(),
+        settings: data,
+      );
+    },
+    _i8.NotificationView: (data) {
+      return _i9.MaterialPageRoute<dynamic>(
+        builder: (context) =>  _i8.NotificationView(viewModel: NotificationViewModel(),),
         settings: data,
       );
     },
@@ -89,7 +135,7 @@ class StackedRouter extends _i1.RouterBase {
   Map<Type, _i1.StackedRouteFactory> get pagesMap => _pagesMap;
 }
 
-extension NavigatorStateExtension on _i7.NavigationService {
+extension NavigatorStateExtension on _i10.NavigationService {
   Future<dynamic> navigateToHomeView([
     int? routerId,
     bool preventDuplicates = true,
@@ -146,6 +192,48 @@ extension NavigatorStateExtension on _i7.NavigationService {
         transition: transition);
   }
 
+  Future<dynamic> navigateToMainView([
+    int? routerId,
+    bool preventDuplicates = true,
+    Map<String, String>? parameters,
+    Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
+        transition,
+  ]) async {
+    return navigateTo<dynamic>(Routes.mainView,
+        id: routerId,
+        preventDuplicates: preventDuplicates,
+        parameters: parameters,
+        transition: transition);
+  }
+
+  Future<dynamic> navigateToProfileView([
+    int? routerId,
+    bool preventDuplicates = true,
+    Map<String, String>? parameters,
+    Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
+        transition,
+  ]) async {
+    return navigateTo<dynamic>(Routes.profileView,
+        id: routerId,
+        preventDuplicates: preventDuplicates,
+        parameters: parameters,
+        transition: transition);
+  }
+
+  Future<dynamic> navigateToNotificationView([
+    int? routerId,
+    bool preventDuplicates = true,
+    Map<String, String>? parameters,
+    Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
+        transition,
+  ]) async {
+    return navigateTo<dynamic>(Routes.notificationView,
+        id: routerId,
+        preventDuplicates: preventDuplicates,
+        parameters: parameters,
+        transition: transition);
+  }
+
   Future<dynamic> replaceWithHomeView([
     int? routerId,
     bool preventDuplicates = true,
@@ -196,6 +284,48 @@ extension NavigatorStateExtension on _i7.NavigationService {
         transition,
   ]) async {
     return replaceWith<dynamic>(Routes.predictView,
+        id: routerId,
+        preventDuplicates: preventDuplicates,
+        parameters: parameters,
+        transition: transition);
+  }
+
+  Future<dynamic> replaceWithMainView([
+    int? routerId,
+    bool preventDuplicates = true,
+    Map<String, String>? parameters,
+    Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
+        transition,
+  ]) async {
+    return replaceWith<dynamic>(Routes.mainView,
+        id: routerId,
+        preventDuplicates: preventDuplicates,
+        parameters: parameters,
+        transition: transition);
+  }
+
+  Future<dynamic> replaceWithProfileView([
+    int? routerId,
+    bool preventDuplicates = true,
+    Map<String, String>? parameters,
+    Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
+        transition,
+  ]) async {
+    return replaceWith<dynamic>(Routes.profileView,
+        id: routerId,
+        preventDuplicates: preventDuplicates,
+        parameters: parameters,
+        transition: transition);
+  }
+
+  Future<dynamic> replaceWithNotificationView([
+    int? routerId,
+    bool preventDuplicates = true,
+    Map<String, String>? parameters,
+    Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
+        transition,
+  ]) async {
+    return replaceWith<dynamic>(Routes.notificationView,
         id: routerId,
         preventDuplicates: preventDuplicates,
         parameters: parameters,

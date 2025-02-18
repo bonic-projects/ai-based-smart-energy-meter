@@ -7,8 +7,13 @@ import 'dart:async' as _i5;
 import 'dart:ui' as _i6;
 
 import 'package:ai_based_smart_energy_meter/models/device_data.dart' as _i8;
+import 'package:ai_based_smart_energy_meter/models/smart_device.dart' as _i10;
 import 'package:ai_based_smart_energy_meter/services/database_service.dart'
     as _i7;
+import 'package:ai_based_smart_energy_meter/services/device_service.dart'
+    as _i9;
+import 'package:ai_based_smart_energy_meter/services/firestore_service.dart'
+    as _i11;
 import 'package:flutter/material.dart' as _i4;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i3;
@@ -102,7 +107,7 @@ class MockNavigationService extends _i1.Mock implements _i2.NavigationService {
     Duration? duration,
     bool? popGesture,
     int? id,
-    _i4.Curve? curve,
+    dynamic curve,
     bool? fullscreenDialog = false,
     bool? preventDuplicates = true,
     _i2.Transition? transitionClass,
@@ -138,7 +143,7 @@ class MockNavigationService extends _i1.Mock implements _i2.NavigationService {
     Duration? duration,
     bool? popGesture,
     int? id,
-    _i4.Curve? curve,
+    dynamic curve,
     bool? fullscreenDialog = false,
     bool? preventDuplicates = true,
     _i2.Transition? transitionClass,
@@ -237,7 +242,7 @@ class MockNavigationService extends _i1.Mock implements _i2.NavigationService {
     dynamic arguments,
     int? id,
     bool? opaque,
-    _i4.Curve? curve,
+    dynamic curve,
     Duration? duration,
     bool? fullscreenDialog = false,
     bool? popGesture,
@@ -719,4 +724,241 @@ class MockDatabaseService extends _i1.Mock implements _i7.DatabaseService {
         returnValue: _i5.Future<double>.value(0.0),
         returnValueForMissingStub: _i5.Future<double>.value(0.0),
       ) as _i5.Future<double>);
+
+  @override
+  _i5.Future<void> resetFlag() => (super.noSuchMethod(
+        Invocation.method(
+          #resetFlag,
+          [],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Stream<DateTime> monitorDeviceChanges(String? dbCode) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #monitorDeviceChanges,
+          [dbCode],
+        ),
+        returnValue: _i5.Stream<DateTime>.empty(),
+        returnValueForMissingStub: _i5.Stream<DateTime>.empty(),
+      ) as _i5.Stream<DateTime>);
+
+  @override
+  _i5.Stream<double> monitorEnergyUpdates() => (super.noSuchMethod(
+        Invocation.method(
+          #monitorEnergyUpdates,
+          [],
+        ),
+        returnValue: _i5.Stream<double>.empty(),
+        returnValueForMissingStub: _i5.Stream<double>.empty(),
+      ) as _i5.Stream<double>);
+
+  @override
+  _i5.Future<void> saveMonthForAIMonitoring(String? month) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #saveMonthForAIMonitoring,
+          [month],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<Map<String, dynamic>?> getAIMonitoringResult() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getAIMonitoringResult,
+          [],
+        ),
+        returnValue: _i5.Future<Map<String, dynamic>?>.value(),
+        returnValueForMissingStub: _i5.Future<Map<String, dynamic>?>.value(),
+      ) as _i5.Future<Map<String, dynamic>?>);
+
+  @override
+  _i5.Future<double> getLatestEnergyValue() => (super.noSuchMethod(
+        Invocation.method(
+          #getLatestEnergyValue,
+          [],
+        ),
+        returnValue: _i5.Future<double>.value(0.0),
+        returnValueForMissingStub: _i5.Future<double>.value(0.0),
+      ) as _i5.Future<double>);
+
+  @override
+  _i5.Future<Map<String, double>> getDailyEnergyData() => (super.noSuchMethod(
+        Invocation.method(
+          #getDailyEnergyData,
+          [],
+        ),
+        returnValue: _i5.Future<Map<String, double>>.value(<String, double>{}),
+        returnValueForMissingStub:
+            _i5.Future<Map<String, double>>.value(<String, double>{}),
+      ) as _i5.Future<Map<String, double>>);
+
+  @override
+  _i5.Future<void> storeDailyEnergy(double? dailyEnergy) => (super.noSuchMethod(
+        Invocation.method(
+          #storeDailyEnergy,
+          [dailyEnergy],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> calculateAndStoreDailyEnergy() => (super.noSuchMethod(
+        Invocation.method(
+          #calculateAndStoreDailyEnergy,
+          [],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
 }
+
+/// A class which mocks [DeviceService].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockDeviceService extends _i1.Mock implements _i9.DeviceService {
+  @override
+  String get deviceId => (super.noSuchMethod(
+        Invocation.getter(#deviceId),
+        returnValue: _i3.dummyValue<String>(
+          this,
+          Invocation.getter(#deviceId),
+        ),
+        returnValueForMissingStub: _i3.dummyValue<String>(
+          this,
+          Invocation.getter(#deviceId),
+        ),
+      ) as String);
+
+  @override
+  String get deviceId2 => (super.noSuchMethod(
+        Invocation.getter(#deviceId2),
+        returnValue: _i3.dummyValue<String>(
+          this,
+          Invocation.getter(#deviceId2),
+        ),
+        returnValueForMissingStub: _i3.dummyValue<String>(
+          this,
+          Invocation.getter(#deviceId2),
+        ),
+      ) as String);
+
+  @override
+  String get deviceId3 => (super.noSuchMethod(
+        Invocation.getter(#deviceId3),
+        returnValue: _i3.dummyValue<String>(
+          this,
+          Invocation.getter(#deviceId3),
+        ),
+        returnValueForMissingStub: _i3.dummyValue<String>(
+          this,
+          Invocation.getter(#deviceId3),
+        ),
+      ) as String);
+
+  @override
+  _i5.Stream<_i10.DeviceData> getDevice1Data() => (super.noSuchMethod(
+        Invocation.method(
+          #getDevice1Data,
+          [],
+        ),
+        returnValue: _i5.Stream<_i10.DeviceData>.empty(),
+        returnValueForMissingStub: _i5.Stream<_i10.DeviceData>.empty(),
+      ) as _i5.Stream<_i10.DeviceData>);
+
+  @override
+  _i5.Stream<_i10.DeviceData> getDevice2Data() => (super.noSuchMethod(
+        Invocation.method(
+          #getDevice2Data,
+          [],
+        ),
+        returnValue: _i5.Stream<_i10.DeviceData>.empty(),
+        returnValueForMissingStub: _i5.Stream<_i10.DeviceData>.empty(),
+      ) as _i5.Stream<_i10.DeviceData>);
+
+  @override
+  _i5.Stream<_i10.DeviceData> getDevice3Data() => (super.noSuchMethod(
+        Invocation.method(
+          #getDevice3Data,
+          [],
+        ),
+        returnValue: _i5.Stream<_i10.DeviceData>.empty(),
+        returnValueForMissingStub: _i5.Stream<_i10.DeviceData>.empty(),
+      ) as _i5.Stream<_i10.DeviceData>);
+
+  @override
+  _i5.Stream<bool> getDevice1State() => (super.noSuchMethod(
+        Invocation.method(
+          #getDevice1State,
+          [],
+        ),
+        returnValue: _i5.Stream<bool>.empty(),
+        returnValueForMissingStub: _i5.Stream<bool>.empty(),
+      ) as _i5.Stream<bool>);
+
+  @override
+  _i5.Stream<bool> getDevice2State() => (super.noSuchMethod(
+        Invocation.method(
+          #getDevice2State,
+          [],
+        ),
+        returnValue: _i5.Stream<bool>.empty(),
+        returnValueForMissingStub: _i5.Stream<bool>.empty(),
+      ) as _i5.Stream<bool>);
+
+  @override
+  _i5.Stream<bool> getDevice3State() => (super.noSuchMethod(
+        Invocation.method(
+          #getDevice3State,
+          [],
+        ),
+        returnValue: _i5.Stream<bool>.empty(),
+        returnValueForMissingStub: _i5.Stream<bool>.empty(),
+      ) as _i5.Stream<bool>);
+
+  @override
+  _i5.Future<void> updateDeviceState(
+    String? deviceId,
+    bool? isOn,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateDeviceState,
+          [
+            deviceId,
+            isOn,
+          ],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> updateResetState(
+    String? deviceId,
+    bool? reset,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateResetState,
+          [
+            deviceId,
+            reset,
+          ],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+}
+
+/// A class which mocks [FirestoreService].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockFirestoreService extends _i1.Mock implements _i11.FirestoreService {}

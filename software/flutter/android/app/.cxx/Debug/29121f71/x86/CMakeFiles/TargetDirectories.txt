@@ -1,0 +1,2 @@
+C:/Users/hp/AndroidStudioProjects/ai_based_smart_energy_meter/android/app/.cxx/Debug/29121f71/x86/CMakeFiles/edit_cache.dir
+C:/Users/hp/AndroidStudioProjects/ai_based_smart_energy_meter/android/app/.cxx/Debug/29121f71/x86/CMakeFiles/rebuild_cache.dir

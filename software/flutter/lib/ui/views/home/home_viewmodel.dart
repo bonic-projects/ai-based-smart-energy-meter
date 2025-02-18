@@ -1,172 +1,276 @@
 import 'dart:async';
-
-import 'package:ai_based_smart_energy_meter/app/app.locator.dart';
-import 'package:ai_based_smart_energy_meter/app/app.logger.dart';
-import 'package:ai_based_smart_energy_meter/services/database_service.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
-
+import '../../../app/app.locator.dart';
 import '../../../models/device_data.dart';
+import '../../../services/database_service.dart';
+import '../notification/notification_viewmodel.dart';
 
-class HomeViewModel extends ReactiveViewModel {
-  final _databaseService = locator<DatabaseService>();
-  // final FirebaseService _firebaseService = FirebaseService();
-  final _snackbarService = SnackbarService();
-// final log= getLogger('HomeViewModel');
+class HomeViewModel extends BaseViewModel {
+  final DatabaseService _databaseService;
+  final NotificationViewModel _notificationViewModel;
+  final SnackbarService _snackbarService;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
-  DeviceReading? _deviceReading;
-  double _energyLimit = 0.0;
-  double _dailyConsumption = 0.0;
-  double _previousEnergy = 0.0;
-  bool isOnline = false;
-  DateTime? lastUpdateTime;
-  Timer? _statusCheckTimer;
+  StreamSubscription? _deviceMonitorSubscription;
+  StreamSubscription? _energyUpdateSubscription;
+  Timer? _refreshTimer;
+  Timer? _resultTimer;
+  Map<DateTime, double> dailyEnergyConsumption = {};
+  Map<String, double> _dailyEnergyData = {};
+  Map<String, double> get dailyEnergyData => _dailyEnergyData;
+  bool _isAlertShowing = false;
+  bool _isAlertDismissed = false;
+  bool isAIMonitoringEnabled = false;
 
-  DeviceReading? get deviceReading => _deviceReading;
-  double get energyLimit => _energyLimit;
-  double get dailyConsumption => _dailyConsumption;
+  double _monthlyLimit = 0.0;
+  DeviceReading? _deviceData;
+  List<FlSpot> energyDataPoints = [];
+  final Map<String, double> dailyTotals = {};
+  String? aiPrediction;
 
-  Future<void> initialize() async {
-    await _loadEnergyLimit();
-    await fetchDeviceData();
-    await _loadPreviousEnergy();
-    await _checkDailyReset();
-    // await _getPreviousEnergy();
-    _monitorDeviceChanges();
-    _startStatusCheck();
+  HomeViewModel({required DatabaseService databaseService, required NotificationViewModel notificationViewModel,
+    required SnackbarService snackbarService
+  })
+      : _databaseService = databaseService,
+        _notificationViewModel = notificationViewModel,
+        _snackbarService=snackbarService
+  {
+    _initializeData();
+    _startMonitoring();
+  }
+
+  DeviceReading? get deviceData => _deviceData;
+  double get monthlyLimit => _monthlyLimit;
+  bool get isAlertDismissed => _isAlertDismissed;
+
+  bool _isLoading = true;
+  bool get isLoading => _isLoading;
+
+  Future<void> _initializeData() async {
+    setBusy(true);
+    try {
+      print("Starting initialization...");
+      await _fetchDeviceData();
+      await _loadEnergyLimit();
+      fetchDailyEnergyData();
+    } catch (e) {
+      print("Error in initialization: $e");
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  void _setupDailyDataTracking() {
+    _deviceMonitorSubscription?.cancel();
+    _deviceMonitorSubscription =
+        _databaseService.monitorDeviceChanges(dbCode).listen((_) async {
+      await _fetchDeviceData();
+    });
+  }
+
+  Future<void> _fetchDeviceData() async {
+    try {
+      _deviceData = await _databaseService.fetchDeviceData();
+      _checkEnergyLimit();
+      processDailyEnergy();
+      notifyListeners();
+    } catch (e) {
+      setError(e);
+    }
+  }
+
+  Future<void> fetchDailyEnergyData() async {
+    _isLoading = true;
+    notifyListeners();
+
+    _dailyEnergyData = await _databaseService.getDailyEnergyData();
+    print('🔥 Fetched Data from Firebase: $_dailyEnergyData');
+
+    // Convert date keys (2025-02-07) to weekday names (Fri)
+    Map<String, double> processedData = {};
+    _dailyEnergyData.forEach((key, value) {
+      try {
+        DateTime date = DateTime.parse(key); // Convert "YYYY-MM-DD" to DateTime
+        String dayName = DateFormat('EEE').format(date); // Convert to "Fri"
+        processedData[dayName] = value; // Store in new map
+      } catch (e) {
+        print('❌ Error parsing date: $key');
+      }
+    });
+
+    _dailyEnergyData = processedData;
+    print('✅ Processed Data: $_dailyEnergyData');
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // Ensure daily calculation runs
+  Future<void> processDailyEnergy() async {
+    await _databaseService.calculateAndStoreDailyEnergy();
+    await fetchDailyEnergyData();
+  }
+
+  List<BarChartGroupData> getBarChartData() {
+    List<String> days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    return List.generate(7, (index) {
+      String day = days[index];
+      double energyValue =
+          dailyEnergyData[day] ?? 0.0; // Fetch correct energy value
+
+      return BarChartGroupData(
+        x: index,
+        barRods: [
+          BarChartRodData(
+            fromY: 0,
+            toY: energyValue,
+            width: 18,
+            color: index == (DateTime.now().weekday % 7)
+                ? Colors.orange
+                : Colors.amber, // Highlight current day
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ],
+        // showingTooltipIndicators: [0],
+      );
+    });
   }
 
   Future<void> _loadEnergyLimit() async {
-    final prefs = await SharedPreferences.getInstance();
-    _energyLimit = prefs.getDouble('energy_limit') ?? 0.0;
-    notifyListeners();
-  }
-
-  Future<void> _loadPreviousEnergy() async {
-    final prefs = await SharedPreferences.getInstance();
-    _previousEnergy = prefs.getDouble('previous_energy') ?? 0.0;
-  }
-
-  Future<void> setEnergyLimit(double limit) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('energy_limit', limit);
-    _energyLimit = limit;
-    notifyListeners();
-    checkLimitExceeded();
-  }
-
-  Future<void> fetchDeviceData() async {
     try {
-      final data = await _databaseService.fetchDeviceData();
-      if (data != null) {
-        _deviceReading = data;
-        notifyListeners();
-      } else {
-        // log.i('No data returned from Firebase');
-      }
-    } catch (e) {
-      // log.e('Error fetching device data: $e');
-      // print('Error fetching device data: $e');
-    }
-  }
-
-  /// Reset daily consumption at the start of a new day
-  Future<void> _checkDailyReset() async {
-    final prefs = await SharedPreferences.getInstance();
-    final lastResetTimestamp = prefs.getInt('last_reset_timestamp') ?? 0;
-
-    final now = DateTime.now();
-    final lastResetDate =
-    DateTime.fromMillisecondsSinceEpoch(lastResetTimestamp);
-
-    if (now.day != lastResetDate.day ||
-        now.month != lastResetDate.month ||
-        now.year != lastResetDate.year) {
-      // New day detected
-      await prefs.setInt('last_reset_timestamp', now.millisecondsSinceEpoch);
-      final currentEnergy = _deviceReading?.energy ?? 0.0;
-      await prefs.setDouble('previous_energy', currentEnergy);
-      // log.i("New day reset. Current energy stored as previous: $currentEnergy");
-      // print("New day reset. Current energy stored as previous: $currentEnergy");
-      _dailyConsumption = 0.0; // Reset daily consumption
-    } else {
-      // Calculate consumption
-      final previousEnergy = prefs.getDouble('previous_energy') ?? 0.0;
-      final currentEnergy = _deviceReading?.energy ?? 0.0;
-      _dailyConsumption = currentEnergy - previousEnergy;
-      // log.i("Continuing day. Current energy: $currentEnergy, Previous energy: $previousEnergy, Daily consumption: $_dailyConsumption");
-      // print(
-      //     "Continuing day. Current energy: $currentEnergy, Previous energy: $previousEnergy, Daily consumption: $_dailyConsumption");
-    }
-
-    notifyListeners();
-  }
-
-
-  void calculateDailyConsumption() {
-    _dailyConsumption = (_deviceReading?.energy ?? 0.0) - _previousEnergy;
-    if (_dailyConsumption < 0)
-      _dailyConsumption = 0.0; // Prevent negative values
-    notifyListeners();
-    checkLimitExceeded();
-  }
-
-  // Future<double> _getPreviousEnergy() {
-  //   final prefs = SharedPreferences.getInstance();
-  //   return prefs.then((prefs) => prefs.getDouble('previous_energy') ?? 0.0);
-  // }
-
-  void checkLimitExceeded() {
-    if (_dailyConsumption > _energyLimit) {
-      _snackbarService.showSnackbar(
-        message: 'You have exceeded your set limit!',
-        title: 'Limit Exceeded',
-        duration: const Duration(seconds: 5),
-      );
-    }
-  }
-
-  void _monitorDeviceChanges() {
-    final dbCode = "devices/i6v29xWLkNNXWfGjta1jh3z336j2/reading";
-    _databaseService.monitorDeviceChanges(dbCode).listen((timestamp) {
-      lastUpdateTime = timestamp;
-      isOnline = true;
+      _monthlyLimit = await _databaseService.getEnergyLimit();
+      _checkEnergyLimit();
       notifyListeners();
+    } catch (e) {
+      setError(e);
+    }
+  }
+
+  Future<void> updateMonthlyLimit(double newLimit) async {
+    try {
+      await _databaseService.setEnergyLimit(newLimit);
+      _monthlyLimit = newLimit;
+      _checkEnergyLimit();
+      notifyListeners();
+    } catch (e) {
+      setError(e);
+    }
+  }
+
+  void _checkEnergyLimit() async {
+    if (isOverLimit() && !_isAlertShowing) {
+      _isAlertShowing = true;
+      await _playBeepSound();
+
+      // Show SnackBar using SnackbarService
+      _snackbarService.showSnackbar(
+        message: 'You have reached your energy usage limit!!',
+        title: 'Current Monthly Usage: ${_deviceData?.energy.toStringAsFixed(2)} kWh',
+        // duration: Duration(seconds: 5), // Adjust the duration as needed
+      );
+
+      // Add a notification using NotificationViewModel
+      _notificationViewModel.addNotification(
+        'You have reached your energy usage limit!!',
+        'Current Monthly Usage: ${_deviceData?.energy.toStringAsFixed(2)} kWh',
+      );
+
+      notifyListeners();
+    } else if (!isOverLimit()) {
+      _isAlertShowing = false;
+    }
+  }
+
+  Future<void> _playBeepSound() async {
+    try {
+      await _audioPlayer.play(AssetSource('beep.mp3'));
+    } catch (e) {
+      print("Error playing beep sound: $e");
+    }
+  }
+
+  void dismissAlert() {
+    _isAlertDismissed = true;
+    notifyListeners();
+  }
+
+  int? _lastUpdatedDay;
+  void _startMonitoring() {
+    _deviceMonitorSubscription =
+        _databaseService.monitorDeviceChanges(dbCode).listen((_) async {
+      await _fetchDeviceData();
+    });
+
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _fetchDeviceData();
     });
   }
 
-  void _startStatusCheck() {
-    const offlineThreshold = Duration(seconds: 5); // Threshold for offline status
-    _statusCheckTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (lastUpdateTime == null) return;
-
-      final timeSinceLastUpdate = DateTime.now().difference(lastUpdateTime!);
-      if (timeSinceLastUpdate > offlineThreshold) {
-        if (isOnline) {
-          isOnline = false;
-          notifyListeners(); // Notify only if the status changes
-        }
-      }
-    });
+  bool isOverLimit() {
+    return _deviceData != null &&
+        _monthlyLimit > 0 &&
+        _deviceData!.energy > _monthlyLimit;
   }
+
+  double getUsagePercentage() {
+    return (_deviceData == null || _monthlyLimit <= 0)
+        ? 0.0
+        : (_deviceData!.energy / _monthlyLimit) * 100;
+  }
+
+  // Format values for display
+  String formatVoltage() => _deviceData?.voltage.toStringAsFixed(2) ?? '0.00';
+  String formatCurrent() => _deviceData?.current.toStringAsFixed(2) ?? '0.00';
+  String formatPower() => _deviceData?.power.toStringAsFixed(2) ?? '0.00';
+  String formatEnergy() => _deviceData?.energy.toStringAsFixed(2) ?? '0.00';
+
+  void toggleAIMonitoring() async {
+    isAIMonitoringEnabled = !isAIMonitoringEnabled;
+    notifyListeners();
+    if (isAIMonitoringEnabled) {
+      await _databaseService
+          .saveMonthForAIMonitoring(_getMonthName(DateTime.now().month));
+      _resultTimer = Timer(const Duration(seconds: 10), () async {
+        aiPrediction =
+            (await _databaseService.getAIMonitoringResult())?['prediction'] ??
+                'No prediction available';
+        notifyListeners();
+      });
+    }
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
+    return months[month - 1];
+  }
+
   @override
   void dispose() {
-    _statusCheckTimer?.cancel(); // Cancel the timer when the view model is disposed
+    _energyUpdateSubscription?.cancel();
+    _deviceMonitorSubscription?.cancel();
+    _refreshTimer?.cancel();
+    _resultTimer?.cancel();
+    _audioPlayer.dispose();
     super.dispose();
-  }
-
-  Future<void> resetValue() async {
-    try {
-      setBusy(true); // Indicate that the ViewModel is busy
-      await _databaseService.resetFlag();
-    } catch (e) {
-      // log.e("Error resetting value in ViewModel: $e");
-      // print("Error resetting value in ViewModel: $e");
-    } finally {
-      setBusy(false); // Reset the busy state
-    }
   }
 }

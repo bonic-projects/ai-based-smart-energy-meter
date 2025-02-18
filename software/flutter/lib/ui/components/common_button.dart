@@ -10,10 +10,8 @@ class CommonButton extends StatelessWidget {
       onPressed: onpress,
       child: Text(text),
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.black12,
-        side: BorderSide(color: Colors.white38)
-
-      ),
+          backgroundColor: Colors.black12,
+          side: BorderSide(color: Colors.white38)),
     );
   }
 }

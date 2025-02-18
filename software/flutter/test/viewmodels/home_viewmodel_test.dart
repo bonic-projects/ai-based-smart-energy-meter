@@ -1,14 +1,17 @@
+import 'package:ai_based_smart_energy_meter/services/database_service.dart';
+import 'package:ai_based_smart_energy_meter/ui/views/notification/notification_viewmodel.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:ai_based_smart_energy_meter/app/app.bottomsheets.dart';
 import 'package:ai_based_smart_energy_meter/app/app.locator.dart';
 import 'package:ai_based_smart_energy_meter/ui/common/app_strings.dart';
 import 'package:ai_based_smart_energy_meter/ui/views/home/home_viewmodel.dart';
+import 'package:stacked_services/stacked_services.dart';
 
 import '../helpers/test_helpers.dart';
 
 void main() {
-  HomeViewModel getModel() => HomeViewModel();
+  HomeViewModel getModel() => HomeViewModel(databaseService: DatabaseService(),notificationViewModel: NotificationViewModel(),snackbarService: SnackbarService());
 
   group('HomeViewmodelTest -', () {
     setUp(() => registerServices());

@@ -1,0 +1,1 @@
+C:\Users\hp\AndroidStudioProjects\ai_based_smart_energy_meter\build\app\intermediates\cxx\RelWithDebInfo\2n2591b1\obj\arm64-v8a

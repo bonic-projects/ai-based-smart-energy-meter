@@ -1,168 +1,311 @@
-import 'package:firebase_database/firebase_database.dart';
+import 'package:ai_based_smart_energy_meter/ui/components/topenergy_alert.dart';
+import 'package:ai_based_smart_energy_meter/ui/views/notification/notification_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
+import 'package:ai_based_smart_energy_meter/ui/views/devices/devices_viewmodel.dart';
 
-import 'devices_viewmodel.dart';
+import '../../../services/device_service.dart';
 
 class DevicesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ViewModelBuilder<DeviceViewModel>.reactive(
-      viewModelBuilder: () => DeviceViewModel(),
+      viewModelBuilder: () => DeviceViewModel(DeviceService(),NotificationViewModel()),
       builder: (context, model, child) {
         return Scaffold(
-          backgroundColor: Colors.black12,
-          appBar: AppBar(
-            backgroundColor: Colors.yellow,
-            title: Text('Devices'),
-          ),
-          body: StreamBuilder(
-            stream: model.devicesStream,
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
-
-              final devices = snapshot.data!.docs;
-
-              return ListView.builder(
-                itemCount: devices.length,
-                itemBuilder: (context, index) {
-                  final device = devices[index];
-                  final deviceId = device.id;
-                  return Card(
-                    color: Colors.black12,
-                    child: ListTile(
-                      title: Text(
-                        device['name'],
-                        style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(
-                        'Total Usage: ${device['totalUsage']} kWh',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ElevatedButton(
-                            onPressed: device['isMonitoring']
-                                ? null
-                                : () => _showMonitoringDialog(context, model, deviceId, device),
-                            child: Text(device['isMonitoring'] ? 'Monitoring...' : 'Start Monitoring'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black12,
-                              side: BorderSide(color: Colors.white38),
-                            ),
-                          ),
-                          SizedBox(width: 10),
-                          ElevatedButton(
-                            onPressed: () => model.resetUsage(deviceId),
-                            child: Text('Reset'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black12,
-                              side: BorderSide(color: Colors.white38),
-                            ),
-                          ),
-                        ],
-                      ),
+          body: SafeArea(
+            child: Column(
+              children: <Widget>[
+                // Peak Hour Alert Banner (Only visible during peak hours when any device is ON)
+                if (model.showPeakAlert)
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(12),
+                    color: Colors.red.shade100,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.warning, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text(
+                          'Devices are running during peak hours!',
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red),
+                        ),
+                      ],
                     ),
-                  );
-                },
-              );
-            },
-          ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () {
-              _showAddDeviceDialog(context, model);
-            },
-            child: Icon(Icons.add),
+                  ),
+                // Energy Limit Exceeded Alert
+                if (model.showAlert)
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(12),
+                    color: Colors.orange.shade100,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.warning, color: Colors.orange),
+                            SizedBox(width: 8),
+                            Text(
+                              'Energy limit exceeded!',
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange),
+                            ),
+                          ],
+                        ),
+                        TextButton(
+                          onPressed: () => model.dismissAlert(),
+                          child: Text('Dismiss'),
+                        ),
+                      ],
+                    ),
+                  ),
+                Expanded(
+                  child: ListView.builder(
+                    padding: EdgeInsets.fromLTRB(8, 8, 8, 80),
+                    itemCount: model.devices.length,
+                    itemBuilder: (context, index) {
+                      return FutureBuilder<String?>(
+                        future: model.getDeviceName(index),
+                        builder: (context, snapshot) {
+                          final device = model.devices[index];
+                          final customName =
+                              snapshot.data; // Custom name (null if not set)
+                          final defaultName =
+                              'DEVICE ${index + 1}'; // Default name
+                          final deviceName = customName ?? defaultName;
+
+                          return Card(
+                            color: Color(0xFFC8DBFF),
+                            margin: EdgeInsets.only(bottom: 12),
+                            child: Padding(
+                              padding: EdgeInsets.all(12),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        defaultName,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Limit: ${model.getLimit(index)} kWh',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(Icons.edit),
+                                        onPressed: () => _showEditDialog(
+                                            context, model, index),
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    deviceName,
+                                    style: TextStyle(
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: Row(
+                                      children: [
+                                        SizedBox(width: 8),
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              model.toggleDeviceState(index),
+                                          style: ElevatedButton.styleFrom(
+                                              shape: RoundedRectangleBorder()),
+                                          child: Text(
+                                            model.getButtonState(index)
+                                                ? 'Turn Off'
+                                                : 'Turn On',
+                                            style: TextStyle(
+                                                color: Color(0XFFA10000)),
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        ElevatedButton(
+                                          onPressed: () => _showSetLimitDialog(
+                                              context, model, index),
+                                          style: ElevatedButton.styleFrom(
+                                              shape: RoundedRectangleBorder()),
+                                          child: Text(
+                                            'Set Limit',
+                                            style: TextStyle(
+                                                color: Color(0XFFA10000)),
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 8,
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              model.resetDevice(index),
+                                          style: ElevatedButton.styleFrom(
+                                              shape: RoundedRectangleBorder()),
+                                          child: Text(
+                                            'Reset',
+                                            style: TextStyle(
+                                                color: Color(0XFFA10000)),
+                                          ),
+                                        )
+                                        // SizedBox(width: 8),
+                                        // Text(
+                                        //   'Set Limit: ${model.getLimit(index)} kWh',
+                                        //   style: TextStyle(
+                                        //     fontSize: 16,
+                                        //     fontWeight: FontWeight.bold,
+                                        //   ),
+                                        // ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  GridView.count(
+                                    shrinkWrap: true,
+                                    physics: NeverScrollableScrollPhysics(),
+                                    crossAxisCount: 3,
+                                    childAspectRatio: 1.8,
+                                    mainAxisSpacing: 8,
+                                    crossAxisSpacing: 8,
+                                    children: [
+                                      _buildMetricItem(
+                                        'Voltage',
+                                        '${device.voltage.toStringAsFixed(2)}V',
+                                      ),
+                                      _buildMetricItem(
+                                        'Current',
+                                        '${device.current.toStringAsFixed(2)}A',
+                                      ),
+                                      _buildMetricItem(
+                                        'Power',
+                                        '${device.power.toStringAsFixed(2)}W',
+                                      ),
+                                      _buildMetricItem(
+                                        'Energy',
+                                        '${device.energy.toStringAsFixed(2)}kWh',
+                                      ),
+                                      _buildMetricItem(
+                                        'Cost',
+                                        '\$${device.cost.toStringAsFixed(2)}',
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
     );
   }
 
-  void _showMonitoringDialog(BuildContext context, DeviceViewModel model, String deviceId, dynamic device) {
-    final currentUsageController = ValueNotifier<double>(0.0);
+  Widget _buildMetricItem(String label, String value) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade500),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: EdgeInsets.all(4),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
+          Text(
+            value,
+            style: TextStyle(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
 
-    final energyRef = FirebaseDatabase.instance.ref().child('devices/$deviceId/reading/energy');
-    energyRef.onValue.listen((event) {
-      final currentValue = (event.snapshot.value as num?)?.toDouble() ?? 0.0;
-      final beforeValue = (device['beforeValue'] as num?)?.toDouble() ?? 0.0;
-      currentUsageController.value = currentValue - beforeValue;
-    });
+  void _showEditDialog(
+      BuildContext context, DeviceViewModel model, int index) async {
+    final savedName = await model.getDeviceName(index);
+    final controller = TextEditingController(text: savedName);
 
     showDialog(
       context: context,
-      builder: (context) {
-        return ValueListenableBuilder<double>(
-          valueListenable: currentUsageController,
-          builder: (context, currentUsage, child) {
-            return AlertDialog(
-              title: Text('${device['name']} Monitoring'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('Before kWh Value: ${device['beforeValue']}'),
-                  Text('Current Usage: ${currentUsage.toStringAsFixed(2)} kWh'),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    model.endMonitoring(deviceId);
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('End Monitoring'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (context) => AlertDialog(
+        title: Text('Edit Device Name'),
+        content: TextField(controller: controller),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await model.saveDeviceName(index, controller.text);
+              Navigator.pop(context);
+            },
+            child: Text('Save'),
+          ),
+        ],
+      ),
     );
   }
 
-  void _showAddDeviceDialog(BuildContext context, DeviceViewModel model) {
-    final TextEditingController deviceNameController = TextEditingController();
-    final TextEditingController deviceIdController = TextEditingController();
+  void _showSetLimitDialog(
+      BuildContext context, DeviceViewModel model, int index) {
+    final controller = TextEditingController();
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Add New Device'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: deviceNameController,
-                decoration: InputDecoration(labelText: 'Device Name'),
-              ),
-              TextField(
-                controller: deviceIdController,
-                decoration: InputDecoration(labelText: 'Device ID'),
-              ),
-            ],
+          title: Text('Set Limit for Device ${index + 1}'),
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(hintText: 'Enter limit'),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.pop(context),
               child: Text('Cancel'),
             ),
-            ElevatedButton(
-              onPressed: () {
-                model.addDevice(
-                  deviceNameController.text.trim(),
-                  deviceIdController.text.trim(),
-                );
-                deviceNameController.clear();
-                deviceIdController.clear();
-                Navigator.of(context).pop();
+            TextButton(
+              onPressed: () async {
+                final limit = double.tryParse(controller.text) ?? 0.0;
+                await model.setLimit(
+                    index, limit); // Set limit for the specific device
+                Navigator.pop(context);
               },
-              child: Text('Add'),
+              child: Text('Save'),
             ),
           ],
         );

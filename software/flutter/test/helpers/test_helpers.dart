@@ -3,6 +3,8 @@ import 'package:mockito/mockito.dart';
 import 'package:ai_based_smart_energy_meter/app/app.locator.dart';
 import 'package:stacked_services/stacked_services.dart';
 import 'package:ai_based_smart_energy_meter/services/database_service.dart';
+import 'package:ai_based_smart_energy_meter/services/device_service.dart';
+import 'package:ai_based_smart_energy_meter/services/firestore_service.dart';
 // @stacked-import
 
 import 'test_helpers.mocks.dart';
@@ -12,6 +14,8 @@ import 'test_helpers.mocks.dart';
   MockSpec<BottomSheetService>(onMissingStub: OnMissingStub.returnDefault),
   MockSpec<DialogService>(onMissingStub: OnMissingStub.returnDefault),
   MockSpec<DatabaseService>(onMissingStub: OnMissingStub.returnDefault),
+  MockSpec<DeviceService>(onMissingStub: OnMissingStub.returnDefault),
+  MockSpec<FirestoreService>(onMissingStub: OnMissingStub.returnDefault),
 // @stacked-mock-spec
 ])
 void registerServices() {
@@ -19,6 +23,8 @@ void registerServices() {
   getAndRegisterBottomSheetService();
   getAndRegisterDialogService();
   getAndRegisterDatabaseService();
+  getAndRegisterDeviceService();
+  getAndRegisterFirestoreService();
 // @stacked-mock-register
 }
 
@@ -76,6 +82,20 @@ DatabaseService getAndRegisterDatabaseService() {
   _removeRegistrationIfExists<DatabaseService>();
   final service = DatabaseService();
   locator.registerSingleton<DatabaseService>;
+  return service;
+}
+
+MockDeviceService getAndRegisterDeviceService() {
+  _removeRegistrationIfExists<DeviceService>();
+  final service = MockDeviceService();
+  locator.registerSingleton<DeviceService>(service);
+  return service;
+}
+
+MockFirestoreService getAndRegisterFirestoreService() {
+  _removeRegistrationIfExists<FirestoreService>();
+  final service = MockFirestoreService();
+  locator.registerSingleton<FirestoreService>(service);
   return service;
 }
 // @stacked-mock-create

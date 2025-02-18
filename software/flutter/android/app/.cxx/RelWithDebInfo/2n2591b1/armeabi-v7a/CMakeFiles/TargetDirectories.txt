@@ -1,0 +1,2 @@
+C:/Users/hp/AndroidStudioProjects/ai_based_smart_energy_meter/android/app/.cxx/RelWithDebInfo/2n2591b1/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/hp/AndroidStudioProjects/ai_based_smart_energy_meter/android/app/.cxx/RelWithDebInfo/2n2591b1/armeabi-v7a/CMakeFiles/rebuild_cache.dir
