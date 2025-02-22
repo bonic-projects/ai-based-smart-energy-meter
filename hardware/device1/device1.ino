@@ -2,17 +2,15 @@
 #include <FirebaseESP32.h>
 #include <addons/TokenHelper.h>
 #include <addons/RTDBHelper.h>
-#include "EmonLib.h"  // Include EmonLib for energy monitoring
-#include <EEPROM.h>  // Include EEPROM library for storing data
-#include <Wire.h>  // Include Wire library for I2C communication
-#include <LiquidCrystal_I2C.h>  // Include LiquidCrystal_I2C library for LCD display
+#include "EmonLib.h"
+#include <EEPROM.h>
 
 // Firebase Configuration
 #define WIFI_SSID "Autobonics_4G"
 #define WIFI_PASSWORD "autobonics@27"
 #define API_KEY "AIzaSyBMe4q-SD-8oP1DPBiSF7NxVaBytNhaIJM"
 #define DATABASE_URL "https://ai-based-smart-energy-meter-default-rtdb.firebaseio.com"
-#define USER_EMAIL "device@gmail.com"
+#define USER_EMAIL "device1@gmail.com"
 #define USER_PASSWORD "12345678"
 
 // Firebase objects
@@ -24,12 +22,12 @@ FirebaseData stream; // Firebase stream object for listening to data changes
 String uid;
 String path;
 
-// LCD Configuration
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+// Relay pin
+#define RELAY_PIN 14
 
 // Constants for calibration
-const float vCalibration = 42.5;  // Voltage calibration factor
-const float currCalibration = 0.73;  // Current calibration factor
+const float vCalibration = 70;  // Voltage calibration factor
+const float currCalibration = 0.68;  // Current calibration factor
 
 // EnergyMonitor instance
 EnergyMonitor emon;  // Create an instance of EnergyMonitor
@@ -44,15 +42,10 @@ unsigned long lastMillis = millis();  // Variable to store last time in millisec
 const int addrKWh = 12;  // EEPROM address for kWh
 const int addrCost = 16;  // EEPROM address for cost
 
-// Display page variable
-int displayPage = 0;  // Variable to track current LCD display page
-
 // Function prototypes
 void sendEnergyDataToFirebase();
 void readEnergyDataFromEEPROM();
 void saveEnergyDataToEEPROM();
-void updateLCD();
-void changeDisplayPage();
 void resetEEPROM();
 void streamCallback(StreamData data);
 void streamTimeoutCallback(bool timeout);
@@ -65,14 +58,36 @@ void streamCallback(StreamData data) {
   printResult(data);  // see addons/RTDBHelper.h
 
   FirebaseJson json = data.jsonObject();
+  FirebaseJsonData state;
   FirebaseJsonData reset;
 
+
+  // Check if the "data" field contains a boolean value
+  json.get(state, "state");
   json.get(reset, "reset");
 
+  if (state.success) {
+    bool relayValue = state.to<bool>();
+    if (relayValue) {
+      digitalWrite(RELAY_PIN, HIGH); // Turn relay ON
+      Serial.println("Relay ON");
+    } else {
+      digitalWrite(RELAY_PIN, LOW); // Turn relay OFF
+      Serial.println("Relay OFF");
+    }
+  }
+
+  // Handle reset command
+  
   if (reset.success) {
     bool resetValue = reset.to<bool>();
+    Serial.println("Do you wanna reset?");
+    Serial.println(resetValue);
     if (resetValue) {
+      Serial.println("Reset Initiated");
       resetEEPROM();
+    }else{
+      Serial.println("It's false , can't be resetted");
     }
   }
 }
@@ -90,7 +105,11 @@ void streamTimeoutCallback(bool timeout) {
 void setup() {
   // Start serial communication
   Serial.begin(115200);
-  
+
+  // Initialize relay pin
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, LOW); // Ensure relay is OFF initially
+
   // Initialize Wi-Fi
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Connecting to Wi-Fi");
@@ -105,8 +124,8 @@ void setup() {
 
   // Initialize Firebase
   config.api_key = API_KEY;
-  auth.user.email = USER_EMAIL;
-  auth.user.password = USER_PASSWORD;
+  auth.user.email = USER_EMAIL;  //device3@gmail.com
+  auth.user.password = USER_PASSWORD;  //12345678
   config.database_url = DATABASE_URL;
   config.token_status_callback = tokenStatusCallback;
 
@@ -128,10 +147,6 @@ void setup() {
   }
   Firebase.setStreamCallback(stream, streamCallback, streamTimeoutCallback);
 
-  // Initialize the LCD
-  lcd.init();
-  lcd.backlight();
-
   // Initialize EEPROM
   EEPROM.begin(32);
 
@@ -149,7 +164,7 @@ void loop() {
   float Irms = emon.Irms;
   float apparentPower = emon.apparentPower;
 
-  if (Vrms < 15.0) {
+  if (Vrms < 30.0) {
     Vrms = 0.0;
     apparentPower = 0.0;
   }
@@ -168,11 +183,6 @@ void loop() {
   // Send data to Firebase
   sendEnergyDataToFirebase();
 
-  // Update the LCD display
-  updateLCD();
-
-  // Change display page periodically
-  changeDisplayPage();
   delay(2000);
 }
 
@@ -214,31 +224,9 @@ void saveEnergyDataToEEPROM() {
   EEPROM.commit();
 }
 
-void updateLCD() {
-  lcd.clear();
-  if (displayPage == 0) {
-    lcd.setCursor(0, 0);
-    lcd.printf("V:%.fV I: %.fA", emon.Vrms, emon.Irms);
-    lcd.setCursor(0, 1);
-    lcd.printf("P: %.f Watt", emon.apparentPower);
-  } else if (displayPage == 1) {
-    lcd.setCursor(0, 0);
-    lcd.printf("Energy: %.2fkWh", kWh);
-    lcd.setCursor(0, 1);
-    lcd.printf("Cost: %.2f", cost);
-  }
-}
-
-void changeDisplayPage() {
-  displayPage = (displayPage + 1) % 2;
-  updateLCD();
-}
-
 void resetEEPROM() {
   kWh = 0.0;
   cost = 0.0;
   saveEnergyDataToEEPROM();
   Serial.println("EEPROM reset");
 }
-
-
