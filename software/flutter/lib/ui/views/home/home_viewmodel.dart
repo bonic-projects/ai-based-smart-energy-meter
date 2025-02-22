@@ -234,13 +234,16 @@ class HomeViewModel extends BaseViewModel {
   void toggleAIMonitoring() async {
     isAIMonitoringEnabled = !isAIMonitoringEnabled;
     notifyListeners();
+
     if (isAIMonitoringEnabled) {
       await _databaseService
           .saveMonthForAIMonitoring(_getMonthName(DateTime.now().month));
-      _resultTimer = Timer(const Duration(seconds: 10), () async {
-        aiPrediction =
-            (await _databaseService.getAIMonitoringResult())?['prediction'] ??
-                'No prediction available';
+
+      _resultTimer = Timer(const Duration(seconds: 5), () async {
+        final result = await _databaseService.getAIMonitoringResult();
+        debugPrint('AI Monitoring Result: $result'); // ✅ Debugging log
+
+        aiPrediction = result?.toString() ?? 'No prediction available';
         notifyListeners();
       });
     }

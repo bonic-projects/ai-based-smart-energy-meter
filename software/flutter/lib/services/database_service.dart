@@ -63,10 +63,18 @@ class DatabaseService {
     });
   }
 
-  Future<Map<String, dynamic>?> getAIMonitoringResult() async {
-    final snapshot =
-        await _dbRef.child('devices/$dbCode/ai_monitoring_result').get();
-    return snapshot.value as Map<String, dynamic>?;
+  Future<dynamic> getAIMonitoringResult() async {
+    final snapshot = await _databaseRef.ref()
+        .child('devices/$dbCode/ai_monitoring_result/result')
+        .get();
+
+    if (snapshot.exists && snapshot.value != null) {
+      print('Fetched result: ${snapshot.value}'); // ✅ Debugging log
+      return snapshot.value; // Can be double, string, etc.
+    } else {
+      print('No result found.');
+      return null; // Or default value
+    }
   }
 
   Future<double> getLatestEnergyValue() async {
